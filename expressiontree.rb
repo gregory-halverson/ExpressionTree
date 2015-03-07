@@ -1,12 +1,17 @@
 module ExpressionTree
   class Expression
-    def initialize(operation, operands)
-      @operation = operation
-      @operands = operands
+    def initialize
+      @operation = nil
+      @numeric_operator = nil
+      @operands = nil
     end
 
     def operation
       @operation
+    end
+
+    def numeric_operator
+      @numeric_operator
     end
 
     def operands
@@ -18,7 +23,8 @@ module ExpressionTree
     end
 
     def evaluate
-      self.evaluate_operands
+      evaluated = self.class.new(self.evaluate_operands)
+      evaluated.numeric_operands? ? evaluated.operands.inject(self.numeric_operator) : evaluated
     end
 
     def numeric_operands?
@@ -26,30 +32,13 @@ module ExpressionTree
     end
   end
 
-  class Constant
-    def initialize(constant)
-      @operation = :constant
-      @constant = constant
-    end
 
-    def operands
-      @constant
-    end
-
-    def to_s
-      @constant.to_s
-    end
-  end
 
   class Sum < Expression
     def initialize(operands)
       @operation = :sum
+      @numeric_operator = :+
       @operands = operands
-    end
-
-    def evaluate
-      evaluated = Sum.new(self.evaluate_operands)
-      evaluated.numeric_operands? ? evaluated.operands.inject(:+) : evaluated
     end
 
     def to_s
@@ -60,12 +49,8 @@ module ExpressionTree
   class Subtraction < Expression
     def initialize(operands)
       @operation = :subtraction
+      @numeric_operator = :-
       @operands = operands
-    end
-
-    def evaluate
-      evaluated = Subtraction.new(self.evaluate_operands)
-      evaluated.numeric_operands? ? evaluated.operands.inject(:-) : evaluated
     end
 
     def to_s
@@ -76,12 +61,8 @@ module ExpressionTree
   class Multiplication < Expression
     def initialize(operands)
       @operation = :multiplication
+      @numeric_operator = :*
       @operands = operands
-    end
-
-    def evaluate
-      evaluated = Multiplication.new(self.evaluate_operands)
-      evaluated.numeric_operands? ? evaluated.operands.inject(:*) : evaluated
     end
 
     def to_s
@@ -92,16 +73,36 @@ module ExpressionTree
   class Division < Expression
     def initialize(operands)
       @operation = :multiplication
+      @numeric_operator = :/
       @operands = operands
-    end
-
-    def evaluate
-      evaluated = Division.new(self.evaluate_operands)
-      evaluated.numeric_operands? ? evaluated.operands.inject(:/) : evaluated
     end
 
     def to_s
       '(' + @operands.join(' / ') + ')'
+    end
+  end
+
+  class Exponentiation < Expression
+    def initialize(base, exponent)
+      @operation = :exponentiation
+      @operands = [base, exponent]
+    end
+
+    def base
+      @operands[0]
+    end
+
+    def exponent
+      @operands[1]
+    end
+
+    def evaluate
+      evaluated = Exponent.new(self.evaluate_operands)
+      evaluated.numeric_operands? ? base ** exponent : evaluated
+    end
+
+    def to_s
+      "#{base}^#{exponent}"
     end
   end
 
@@ -119,5 +120,9 @@ module ExpressionTree
 
   def div(*operands)
     Division.new operands
+  end
+
+  def exp(base, exponent)
+    Exponentiation.new base, exponent
   end
 end
